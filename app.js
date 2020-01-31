@@ -9,33 +9,51 @@ GAME RULES:
 
 */
 
-var scores, roundScore, activePlayer, gamePlaying;
+var scores, roundScore, activePlayer, gamePlaying, winningScore, lastRollWas6;
 
 init();
-
-var x = document.querySelector("#score-0").textContent;
-console.log(x);
 
 document.querySelector(".btn-roll").addEventListener("click", function() {
   if (gamePlaying) {
     // Rondom number
     var dice = Math.floor(Math.random() * 6) + 1;
+    var dice2 = Math.floor(Math.random() * 6) + 1;
+
+    console.log(dice, dice2);
 
     // Display the result
     var diceDOM = document.querySelector(".dice");
+    var dice2DOM = document.querySelector(".dice2");
     diceDOM.style.display = "block";
+    dice2DOM.style.display = "block";
     diceDOM.src = "dice-" + dice + ".png";
+    dice2DOM.src = "dice-" + dice2 + ".png";
 
     // Update the round score IF the rolled number was NOT a 1
-    if (dice !== 1) {
+    if (dice + dice2 === 2) {
+      // Next Player
+      nextPlayer();
+    } else if (lastRollWas6 && (dice === 6 || dice2 === 6)) {
+      console.log(
+        "TWO SIXES IN A ROW!!! PLAYER " + activePlayer + " SCORE SET TO 0"
+      );
+      document.querySelector("#current-" + activePlayer).textContent = 0;
+      document.querySelector("#score-" + activePlayer).textContent = 0;
+      scores[activePlayer] = 0;
+      dice = 0;
+      dice2 = 0;
+      nextPlayer();
+    } else {
       // Add score
-      roundScore += dice;
+      roundScore += dice + dice2;
       document.querySelector(
         "#current-" + activePlayer
       ).textContent = roundScore;
+    }
+    if (dice === 6 || dice2 === 6) {
+      lastRollWas6 = true;
     } else {
-      // Next Player
-      nextPlayer();
+      lastRollWas6 = false;
     }
   }
 });
@@ -50,9 +68,11 @@ document.querySelector(".btn-hold").addEventListener("click", function() {
       scores[activePlayer];
 
     // Check if player won the game
-    if (scores[activePlayer] >= 20) {
+    if (scores[activePlayer] >= winningScore) {
       document.querySelector("#name-" + activePlayer).textContent = "WINNER!";
       document.querySelector(".dice").style.display = "none";
+      document.querySelector(".dice2").style.display = "none";
+
       document
         .querySelector(".player-" + activePlayer + "-panel")
         .classList.add("winner");
@@ -69,6 +89,9 @@ document.querySelector(".btn-hold").addEventListener("click", function() {
 
 function nextPlayer() {
   // Next player
+  console.log("switch player!");
+  lastRollWas6 = false;
+
   activePlayer === 0 ? (activePlayer = 1) : (activePlayer = 0);
   roundScore = 0;
 
@@ -79,6 +102,7 @@ function nextPlayer() {
   document.querySelector(".player-1-panel").classList.toggle("active");
 
   document.querySelector(".dice").style.display = "none";
+  document.querySelector(".dice2").style.display = "none";
 }
 
 document.querySelector(".btn-new").addEventListener("click", init);
@@ -88,7 +112,20 @@ function init() {
   roundScore = 0;
   activePlayer = 0;
 
+  winningScore = prompt(
+    "What will the winning score be?",
+    "Enter a number between 10 - 100"
+  );
+
+  if (winningScore != null) {
+    document.getElementById("winScore").textContent = winningScore;
+  } else {
+    alert("You must enter a valid winning score to start the game!");
+    init();
+  }
+
   document.querySelector(".dice").style.display = "none";
+  document.querySelector(".dice2").style.display = "none";
 
   document.getElementById("score-0").textContent = "0";
   document.getElementById("score-1").textContent = "0";
@@ -102,11 +139,12 @@ function init() {
   document.querySelector(".player-1-panel").classList.remove("active");
   document.querySelector(".player-0-panel").classList.add("active");
   gamePlaying = true;
+  lastRollWas6 = false;
 }
 
 /*
 Challenges
-1. player loses total score if two 6s in a row
+1. Add a second die. player loses total score if two 6s in a row    
 2. Add an input field to allow players to set the winning score
 3. add a second dice to the game. Player loses current score when one of the dice is a 1.
 
